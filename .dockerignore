@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+swiggy_cookies.json
+docs/
+.git/
