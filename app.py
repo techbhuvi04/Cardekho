@@ -6,7 +6,7 @@ from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse
 
 from matcher import match_listings
-from mock_instamart import get_mock_items
+from mock_instamart import get_mock_items, get_mock_blinkit_items
 from scrapers import scrape_blinkit, scrape_instamart, shutdown_browser
 
 app = FastAPI(title="Grocery Price Race")
@@ -39,6 +39,14 @@ async def get_locations():
     return [{"key": k, **v} for k, v in LOCATIONS.items()]
 
 
+@app.delete("/api/cache")
+async def clear_cache():
+    """Flush all cached search results (useful after scraper fixes)."""
+    count = len(_cache)
+    _cache.clear()
+    return {"cleared": count, "message": f"Removed {count} cached result(s)"}
+
+
 @app.get("/api/search")
 async def search(q: str = Query(...), loc: str = Query(...)):
     query = q.strip()
@@ -61,23 +69,37 @@ async def search(q: str = Query(...), loc: str = Query(...)):
     )
     elapsed = round(time.time() - start, 2)
 
+    # ── Instamart: use fixture fallback if live returns nothing ──────────────
     instamart_items = instamart_result["items"]
     instamart_is_sample = False
     if not instamart_items and not instamart_result["error"]:
         instamart_items = get_mock_items(query)
         instamart_is_sample = bool(instamart_items)
 
-    match_output = match_listings(blinkit_result["items"], instamart_items)
+    # ── Blinkit: use fixture fallback if live returns nothing ────────────────
+    blinkit_items = blinkit_result["items"]
+    blinkit_is_sample = False
+    if not blinkit_items and not blinkit_result["error"]:
+        blinkit_items = get_mock_blinkit_items(query)
+        blinkit_is_sample = bool(blinkit_items)
+
+    match_output = match_listings(blinkit_items, instamart_items)
 
     result = {
         "query": query,
         "location": label,
         "elapsed_s": elapsed,
-        "blinkit": {"count": len(blinkit_result["items"]), "error": blinkit_result["error"]},
+        "blinkit": {
+            "count": len(blinkit_items),
+            "error": blinkit_result["error"],
+            "is_sample": blinkit_is_sample,
+            "elapsed_s": blinkit_result.get("elapsed"),
+        },
         "instamart": {
             "count": len(instamart_items),
             "error": instamart_result["error"],
             "is_sample": instamart_is_sample,
+            "elapsed_s": instamart_result.get("elapsed"),
         },
         "matches": match_output["matches"],
         "blinkit_only": match_output["blinkit_only"],
