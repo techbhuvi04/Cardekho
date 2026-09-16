@@ -12,9 +12,9 @@ from playwright.async_api import async_playwright
 # Path to the cookie file produced by export_swiggy_cookies.py
 COOKIE_FILE = Path(__file__).parent / "swiggy_cookies.json"
 
-# Run headed (visible browser) by default so Swiggy's bot-detection passes.
-# Set HEADLESS=1 env var to force headless (CI/server environments).
-HEADLESS = os.environ.get("HEADLESS", "0") != "0"
+# Run headless by default (no visible browser window).
+# Set HEADLESS=0 env var to show the browser window for debugging.
+HEADLESS = os.environ.get("HEADLESS", "1") != "0"
 SITE_TIMEOUT_S = 45
 RESULTS_WAIT_S = 18   # extra time for Swiggy SPA to hydrate
 
