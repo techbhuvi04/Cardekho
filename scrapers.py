@@ -1,4 +1,4 @@
-"""Playwright scrapers for Blinkit and Instamart product search."""
+"""Scrapers for Blinkit (Playwright), Instamart (Playwright), and Zepto (QuickCommerce API)."""
 import asyncio
 import json
 import os
@@ -6,6 +6,8 @@ import re
 import time
 import urllib.parse
 from pathlib import Path
+
+import httpx
 
 from playwright.async_api import async_playwright
 
@@ -438,90 +440,84 @@ async def scrape_instamart(query, lat, lon, address="Selected Location"):
         return {"items": [], "error": str(e), "elapsed": round(time.time() - start, 2)}
 
 
-async def scrape_zepto(query, lat, lon, address="Selected Location"):
-    """Scrape Zepto search results.
+# ── QuickCommerce API key for Zepto live data ────────────────────────────────
+QUICKCOMMERCE_API_KEY = os.environ.get(
+    "QUICKCOMMERCE_API_KEY", "dceb39ab-1c2a-4747-9c17-052654889327"
+)
+QUICKCOMMERCE_BASE = "https://api.quickcommerceapi.com/v1/search"
 
-    Uses the same Playwright API-intercept + DOM-fallback strategy as Blinkit.
-    Search URL: https://www.zeptonow.com/search?query=<term>
+
+def _normalise_zepto_qty(raw: str) -> str:
+    """Convert '1 pack (500 g)' -> '500 g', '1 pc (100 ml)' -> '100 ml', etc."""
+    if not raw:
+        return raw
+    import re as _re
+    # e.g. "1 pack (500 g)" or "1 pc (450 ml)" or "2 pcs (500 ml each)"
+    m = _re.search(r'\(([^)]+)\)', raw)
+    if m:
+        inner = m.group(1).strip()
+        # strip trailing " each"
+        inner = _re.sub(r'\s+each$', '', inner, flags=_re.IGNORECASE)
+        return inner
+    return raw
+
+
+def _map_zepto_product(p: dict) -> dict:
+    """Normalise a QuickCommerce API product dict to our internal schema."""
+    images = p.get("images") or []
+    raw_qty = p.get("quantity", "")
+    return {
+        "name":       p.get("name", ""),
+        "brand":      p.get("brand", ""),
+        "quantity":   _normalise_zepto_qty(raw_qty),
+        "price":      p.get("offer_price"),
+        "mrp":        p.get("mrp"),
+        "in_stock":   p.get("available", True),
+        "image":      images[0] if images else None,
+        "productUrl": p.get("deeplink"),
+        "rating":     p.get("rating"),
+        "platform":   "zepto",
+        "is_sample":  False,
+        "source":     "quickcommerceapi",
+    }
+
+
+
+async def scrape_zepto(query: str, lat: float, lon: float, address: str = "Selected Location"):
+    """Fetch Zepto search results via the QuickCommerce REST API.
+
+    No browser / Playwright needed — pure HTTP call, returns in ~1-2 s.
+    Requires QUICKCOMMERCE_API_KEY (100 free credits, 1 credit/call).
     """
     start = time.time()
     try:
-        browser = await get_browser()
-        context = await browser.new_context(
-            locale="en-IN",
-            user_agent=USER_AGENT,
-            geolocation={"latitude": lat, "longitude": lon},
-            permissions=["geolocation"],
-            extra_http_headers=BROWSER_HEADERS,
-            viewport={"width": 1280, "height": 800},
-        )
-        await context.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-        )
+        params = {
+            "q":        query,
+            "platform": "Zepto",
+            "lat":      lat,
+            "lon":      lon,
+        }
+        headers = {"X-API-Key": QUICKCOMMERCE_API_KEY}
 
-        # Zepto location cookies
-        location_payload = json.dumps({"lat": lat, "lng": lon, "address": address})
-        await context.add_cookies([
-            {"name": "userLocation", "value": urllib.parse.quote(location_payload),
-             "domain": ".zeptonow.com", "path": "/"},
-            {"name": "location_set", "value": "true",
-             "domain": ".zeptonow.com", "path": "/"},
-        ])
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.get(QUICKCOMMERCE_BASE, params=params, headers=headers)
+            resp.raise_for_status()
+            body = resp.json()
 
-        # localStorage pre-seeding
-        loc_obj = json.dumps({"lat": lat, "lng": lon, "address": address})
-        await context.add_init_script(
-            f"""try {{ localStorage.setItem('userLocation', {json.dumps(loc_obj)}); }} catch(e) {{}}"""
-        )
+        if body.get("status") != "success":
+            raise ValueError(f"API error: {body}")
 
-        page = await context.new_page()
+        products = body.get("data", {}).get("products", [])
+        items = [_map_zepto_product(p) for p in products if p.get("available")]
+        items = _filter_by_query(items, query)
 
-        captured = []
-        seen = set()
+        print(f"[zepto-api] '{query}' → {len(items)} items "
+              f"(credits left: {body.get('credits_remaining', '?')})")
 
-        async def on_response(response):
-            url = response.url
-            is_zepto = "zeptonow.com" in url
-            is_relevant = (
-                "search" in url
-                or "/api/" in url
-                or "/product" in url
-            )
-            if not (is_zepto and is_relevant):
-                return
-            try:
-                data = await response.json()
-            except Exception:
-                return
-            walk_json_for_products(data, captured, seen)
+        return {"items": items, "error": None, "elapsed": round(time.time() - start, 2)}
 
-        page.on("response", on_response)
-
-        url = f"https://www.zeptonow.com/search?query={urllib.parse.quote(query)}"
-        await page.goto(url, timeout=SITE_TIMEOUT_S * 1000, wait_until="domcontentloaded")
-
-        # Try to dismiss location wall if any
-        try:
-            detect_btn = page.get_by_text(
-                re.compile(r"detect|use current location|allow", re.I)
-            ).first
-            if await detect_btn.count() > 0:
-                await detect_btn.click(timeout=4000)
-                await page.wait_for_timeout(2000)
-        except Exception:
-            pass
-
-        await page.wait_for_timeout(RESULTS_WAIT_S * 1000)
-
-        if not captured:
-            page_text = await page.inner_text("body")
-            if "₹" in page_text:
-                captured = await _dom_fallback(page)
-
-        await context.close()
-        captured = _filter_by_query(captured, query)
-        return {"items": captured, "error": None, "elapsed": round(time.time() - start, 2)}
     except Exception as e:
+        print(f"[zepto-api] ERROR: {e}")
         return {"items": [], "error": str(e), "elapsed": round(time.time() - start, 2)}
 
 

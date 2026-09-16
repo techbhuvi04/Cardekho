@@ -12,9 +12,13 @@ from scrapers import scrape_blinkit, scrape_instamart, scrape_zepto, shutdown_br
 app = FastAPI(title="Grocery Price Race")
 
 LOCATIONS = {
-    "nsut_dwarka": {"label": "NSUT Dwarka", "lat": 28.6090, "lon": 77.0350},
-    "connaught_place": {"label": "Connaught Place", "lat": 28.6315, "lon": 77.2167},
-    "cyber_city_gurugram": {"label": "Cyber City Gurugram", "lat": 28.4950, "lon": 77.0895},
+    "connaught_place":    {"label": "Connaught Place, Delhi",   "lat": 28.6315, "lon": 77.2167},
+    "nsut_dwarka":        {"label": "NSUT Dwarka, Delhi",       "lat": 28.6090, "lon": 77.0350},
+    "cyber_city_gurugram":{"label": "Cyber City, Gurugram",    "lat": 28.4950, "lon": 77.0895},
+    "bandra_mumbai":      {"label": "Bandra, Mumbai",           "lat": 19.0596, "lon": 72.8295},
+    "andheri_mumbai":     {"label": "Andheri, Mumbai",          "lat": 19.1136, "lon": 72.8697},
+    "koramangala_blr":    {"label": "Koramangala, Bangalore",   "lat": 12.9352, "lon": 77.6245},
+    "indiranagar_blr":    {"label": "Indiranagar, Bangalore",   "lat": 12.9784, "lon": 77.6408},
 }
 
 CACHE_TTL_S = 10 * 60
