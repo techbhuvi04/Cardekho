@@ -1,0 +1,100 @@
+"""FastAPI app for Grocery Price Race."""
+import asyncio
+import time
+
+from fastapi import FastAPI, Query
+from fastapi.responses import FileResponse
+
+from matcher import match_listings
+from mock_instamart import get_mock_items
+from scrapers import scrape_blinkit, scrape_instamart, shutdown_browser
+
+app = FastAPI(title="Grocery Price Race")
+
+LOCATIONS = {
+    "nsut_dwarka": {"label": "NSUT Dwarka", "lat": 28.6090, "lon": 77.0350},
+    "connaught_place": {"label": "Connaught Place", "lat": 28.6315, "lon": 77.2167},
+    "cyber_city_gurugram": {"label": "Cyber City Gurugram", "lat": 28.4950, "lon": 77.0895},
+}
+
+CACHE_TTL_S = 10 * 60
+_cache = {}  # (query, loc) -> (timestamp, result)
+
+# Cap concurrent scrapes across all requests (2 scrapes = both sites of one search)
+_scrape_semaphore = asyncio.Semaphore(2)
+
+
+async def _bounded_scrape(fn, *args):
+    async with _scrape_semaphore:
+        return await fn(*args)
+
+
+@app.get("/")
+async def index():
+    return FileResponse("static/index.html")
+
+
+@app.get("/api/locations")
+async def get_locations():
+    return [{"key": k, **v} for k, v in LOCATIONS.items()]
+
+
+@app.get("/api/search")
+async def search(q: str = Query(...), loc: str = Query(...)):
+    query = q.strip()
+    cache_key = (query.lower(), loc)
+
+    now = time.time()
+    cached = _cache.get(cache_key)
+    if cached and now - cached[0] < CACHE_TTL_S:
+        result = dict(cached[1])
+        result["cached"] = True
+        return result
+
+    location = LOCATIONS.get(loc, LOCATIONS["nsut_dwarka"])
+    lat, lon, label = location["lat"], location["lon"], location["label"]
+
+    start = time.time()
+    blinkit_result, instamart_result = await asyncio.gather(
+        _bounded_scrape(scrape_blinkit, query, lat, lon, label),
+        _bounded_scrape(scrape_instamart, query, lat, lon, label),
+    )
+    elapsed = round(time.time() - start, 2)
+
+    instamart_items = instamart_result["items"]
+    instamart_is_sample = False
+    if not instamart_items and not instamart_result["error"]:
+        instamart_items = get_mock_items(query)
+        instamart_is_sample = bool(instamart_items)
+
+    match_output = match_listings(blinkit_result["items"], instamart_items)
+
+    result = {
+        "query": query,
+        "location": label,
+        "elapsed_s": elapsed,
+        "blinkit": {"count": len(blinkit_result["items"]), "error": blinkit_result["error"]},
+        "instamart": {
+            "count": len(instamart_items),
+            "error": instamart_result["error"],
+            "is_sample": instamart_is_sample,
+        },
+        "matches": match_output["matches"],
+        "blinkit_only": match_output["blinkit_only"],
+        "instamart_only": match_output["instamart_only"],
+        "cached": False,
+    }
+
+    _cache[cache_key] = (now, result)
+    return result
+
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    await shutdown_browser()
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=False)

@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grocery Price Race</title>
+<style>
+  :root {
+    --blinkit: #f8cb46;
+    --blinkit-dark: #f0b90b;
+    --instamart: #fc8019;
+    --green: #0c9d4b;
+    --ink: #1c1c1c;
+    --muted: #6b7280;
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --border: #e7e8ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 3rem;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.1rem;
+  }
+  .logo {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--blinkit), var(--instamart));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+  }
+  h1 {
+    font-size: 1.35rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .tagline { color: var(--muted); font-size: 0.82rem; margin-top: 0.1rem; }
+
+  .search-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 1rem;
+  }
+  .controls { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  input[type=text], select {
+    font-size: 1rem;
+    padding: 0.7rem 0.9rem;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: #fbfbfd;
+    color: var(--ink);
+  }
+  input[type=text] { flex: 1; min-width: 200px; }
+  input[type=text]:focus, select:focus { outline: none; border-color: var(--instamart); }
+  button#searchBtn {
+    cursor: pointer;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.7rem 1.3rem;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: transform 0.1s ease, opacity 0.1s ease;
+  }
+  button#searchBtn:active { transform: scale(0.97); }
+  button#searchBtn:disabled { opacity: 0.5; cursor: default; }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.8rem;
+  }
+  .chip-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    width: 100%;
+    margin-bottom: 0.1rem;
+  }
+  .chip {
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: #fbfbfd;
+    color: var(--ink);
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .chip:hover { background: #f0f1f6; border-color: #d7d9e3; }
+  .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  #loading {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    color: #a15c00;
+    background: #fff6e0;
+    border: 1px solid #ffe4a3;
+    padding: 0.7rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2.5px solid #f0c060;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #status {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .status-pill {
+    font-size: 0.82rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .status-pill.err { background: #fdecec; border-color: #f6c6c6; color: #b3261e; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.blinkit { background: var(--blinkit-dark); }
+  .dot.instamart { background: var(--instamart); }
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 1.4rem 0 0.6rem;
+  }
+
+  .match-card {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 0.9rem;
+    margin-bottom: 0.7rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.8rem;
+    align-items: center;
+  }
+  .side { display: flex; flex-direction: column; gap: 0.15rem; }
+  .side-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.1rem 0.5rem;
+    border-radius: 6px;
+    width: fit-content;
+    margin-bottom: 0.15rem;
+  }
+  .side-label.blinkit { background: var(--blinkit); color: #4a3800; }
+  .side-label.instamart { background: #fff0e2; color: var(--instamart); }
+  .item-name { font-size: 0.9rem; font-weight: 600; line-height: 1.25; }
+  .item-qty { font-size: 0.78rem; color: var(--muted); }
+  .price-row { display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.1rem; }
+  .price { font-size: 1.05rem; font-weight: 700; }
+  .price.cheaper { color: var(--green); }
+  .mrp { text-decoration: line-through; color: #aaa; font-size: 0.78rem; }
+  .unit { color: #999; font-size: 0.72rem; }
+  .verdict { text-align: right; min-width: 100px; }
+  .winner-badge {
+    display: inline-block;
+    background: #e7f8ee;
+    color: var(--green);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    margin-bottom: 0.3rem;
+  }
+  .winner-badge.tie { background: #eef0f5; color: var(--muted); }
+  .saving { font-size: 0.8rem; color: var(--green); font-weight: 600; }
+  .conf { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+
+  .only-lists { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .only-col {
+    flex: 1;
+    min-width: 260px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+  }
+  .only-col h3 { font-size: 0.88rem; margin: 0 0 0.5rem; }
+  .only-col ul { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; }
+  .only-col li { padding: 0.4rem 0; border-bottom: 1px dashed var(--border); }
+  .only-col li:last-child { border-bottom: none; }
+  .only-item-name { font-weight: 500; }
+  .only-item-meta { color: var(--muted); font-size: 0.78rem; }
+  .empty-note { color: var(--muted); font-size: 0.85rem; }
+
+  @media (max-width: 560px) {
+    .match-card { grid-template-columns: 1fr; }
+    .verdict { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">⚡</div>
+  <div>
+    <h1>Grocery Price Race</h1>
+    <div class="tagline">Blinkit vs Instamart, side by side</div>
+  </div>
+</div>
+
+<div class="search-card">
+  <div class="controls">
+    <input type="text" id="query" placeholder="Search e.g. Maggi, Amul butter" value="Maggi">
+    <select id="location"></select>
+    <button id="searchBtn">Compare prices</button>
+  </div>
+  <div class="chips" id="popularChips">
+    <div class="chip-label">Popular searches</div>
+  </div>
+</div>
+
+<div id="loading"><div class="spinner"></div><span>Searching Blinkit and Instamart... this can take 10-25s on a fresh search.</span></div>
+<div id="status"></div>
+<div id="results"></div>
+
+<script>
+const POPULAR_SEARCHES = [
+  "Maggi", "Amul butter", "Amul milk", "Bread", "Eggs", "Tomato",
+  "Onion", "Potato", "Paneer", "Curd", "Coca Cola", "Lays chips",
+  "Tata salt", "Sugar", "Tea", "Coffee"
+];
+
+const loadingEl = document.getElementById('loading');
+const statusEl = document.getElementById('status');
+const resultsEl = document.getElementById('results');
+const locationEl = document.getElementById('location');
+const searchBtn = document.getElementById('searchBtn');
+const queryEl = document.getElementById('query');
+const chipsEl = document.getElementById('popularChips');
+
+function renderChips() {
+  const chipsHtml = POPULAR_SEARCHES.map(term =>
+    `<button type="button" class="chip" data-term="${term}">${term}</button>`
+  ).join('');
+  chipsEl.insertAdjacentHTML('beforeend', chipsHtml);
+  chipsEl.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      queryEl.value = chip.dataset.term;
+      chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      doSearch();
+    });
+  });
+}
+
+async function loadLocations() {
+  const res = await fetch('/api/locations');
+  const locs = await res.json();
+  locationEl.innerHTML = locs.map(l => `<option value="${l.key}">📍 ${l.label}</option>`).join('');
+}
+
+function fmtPrice(p) {
+  return p == null ? '-' : `₹${p.toFixed(2)}`;
+}
+
+function esc(s) {
+  const div = document.createElement('div');
+  div.textContent = s == null ? '' : String(s);
+  return div.innerHTML;
+}
+
+function renderSide(label, item, unitPrice, isCheaper) {
+  if (!item) {
+    return `<div class="side">
+      <span class="side-label ${label}">${label}</span>
+      <span class="empty-note">Not found</span>
+    </div>`;
+  }
+  const priceClass = isCheaper ? 'price cheaper' : 'price';
+  const mrp = (item.mrp && item.mrp > item.price) ? `<span class="mrp">${fmtPrice(item.mrp)}</span>` : '';
+  const unit = unitPrice ? `<span class="unit">${fmtPrice(unitPrice[1])}/${unitPrice[0]}</span>` : '';
+  return `<div class="side">
+    <span class="side-label ${label}">${label}</span>
+    <span class="item-name">${esc(item.name)}</span>
+    ${item.quantity ? `<span class="item-qty">${esc(item.quantity)}</span>` : ''}
+    <div class="price-row">
+      <span class="${priceClass}">${fmtPrice(item.price)}</span>${mrp}
+    </div>
+    ${unit}
+  </div>`;
+}
+
+function renderMatches(matches) {
+  if (!matches.length) return '<p class="empty-note">No matched pairs found.</p>';
+  return matches.map(m => {
+    const isTie = m.cheaper === 'tie';
+    const badgeClass = isTie ? 'winner-badge tie' : 'winner-badge';
+    const badgeText = isTie ? 'Tie' : (m.cheaper ? m.cheaper[0].toUpperCase() + m.cheaper.slice(1) + ' wins' : '-');
+    const savingText = m.saving > 0 ? `<div class="saving">Save ${fmtPrice(m.saving)}</div>` : '';
+    return `<div class="match-card">
+      ${renderSide('blinkit', m.blinkit, m.blinkit_unit_price, m.cheaper === 'blinkit')}
+      ${renderSide('instamart', m.instamart, m.instamart_unit_price, m.cheaper === 'instamart')}
+      <div class="verdict">
+        <span class="${badgeClass}">${badgeText}</span>
+        ${savingText}
+        <div class="conf">${Math.round(m.confidence * 100)}% match</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOnlyList(title, items) {
+  if (!items.length) return `<div class="only-col"><h3>${title}</h3><p class="empty-note">None</p></div>`;
+  const lis = items.map(i => `<li>
+    <div class="only-item-name">${esc(i.name)}</div>
+    <div class="only-item-meta">${i.quantity ? esc(i.quantity) + ' · ' : ''}${fmtPrice(i.price)}</div>
+  </li>`).join('');
+  return `<div class="only-col"><h3>${title}</h3><ul>${lis}</ul></div>`;
+}
+
+async function doSearch() {
+  const q = queryEl.value.trim();
+  const loc = locationEl.value;
+  if (!q) return;
+
+  searchBtn.disabled = true;
+  loadingEl.style.display = 'flex';
+  statusEl.innerHTML = '';
+  resultsEl.innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&loc=${encodeURIComponent(loc)}`);
+    const data = await res.json();
+
+    const blinkitStatus = data.blinkit.error
+      ? `<span class="status-pill err"><span class="dot blinkit"></span>Blinkit error</span>`
+      : `<span class="status-pill"><span class="dot blinkit"></span>Blinkit: ${data.blinkit.count}</span>`;
+    const instamartStatus = data.instamart.error
+      ? `<span class="status-pill err"><span class="dot instamart"></span>Instamart error</span>`
+      : `<span class="status-pill"><span class="dot instamart"></span>Instamart: ${data.instamart.count}</span>`;
+    const timeStatus = `<span class="status-pill">⏱ ${data.elapsed_s}s${data.cached ? ' · cached' : ''}</span>`;
+
+    statusEl.innerHTML = blinkitStatus + instamartStatus + timeStatus;
+
+    resultsEl.innerHTML = `
+      <div class="section-title">Matched products</div>
+      ${renderMatches(data.matches)}
+      <div class="section-title">Only on one store</div>
+      <div class="only-lists">
+        ${renderOnlyList('Only on Blinkit', data.blinkit_only)}
+        ${renderOnlyList('Only on Instamart', data.instamart_only)}
+      </div>
+    `;
+  } catch (e) {
+    statusEl.innerHTML = `<span class="status-pill err">Search failed: ${esc(e)}</span>`;
+  } finally {
+    loadingEl.style.display = 'none';
+    searchBtn.disabled = false;
+  }
+}
+
+searchBtn.addEventListener('click', () => {
+  chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  doSearch();
+});
+queryEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    doSearch();
+  }
+});
+queryEl.addEventListener('input', () => {
+  chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+});
+
+renderChips();
+loadLocations();
+</script>
+</body>
+</html>
