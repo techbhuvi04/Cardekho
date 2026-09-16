@@ -1,13 +1,13 @@
-"""FastAPI app for Grocery Price Race."""
+"""FastAPI app for Grocery Price Race — Blinkit vs Instamart vs Zepto."""
 import asyncio
 import time
 
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse
 
-from matcher import match_listings
-from mock_instamart import get_mock_items, get_mock_blinkit_items
-from scrapers import scrape_blinkit, scrape_instamart, shutdown_browser
+from matcher import match_three_way
+from mock_instamart import get_mock_items, get_mock_blinkit_items, get_mock_zepto_items
+from scrapers import scrape_blinkit, scrape_instamart, scrape_zepto, shutdown_browser
 
 app = FastAPI(title="Grocery Price Race")
 
@@ -20,8 +20,8 @@ LOCATIONS = {
 CACHE_TTL_S = 10 * 60
 _cache = {}  # (query, loc) -> (timestamp, result)
 
-# Cap concurrent scrapes across all requests (2 scrapes = both sites of one search)
-_scrape_semaphore = asyncio.Semaphore(2)
+# Cap concurrent scrapes across all requests
+_scrape_semaphore = asyncio.Semaphore(3)
 
 
 async def _bounded_scrape(fn, *args):
@@ -41,7 +41,7 @@ async def get_locations():
 
 @app.delete("/api/cache")
 async def clear_cache():
-    """Flush all cached search results (useful after scraper fixes)."""
+    """Flush all cached search results."""
     count = len(_cache)
     _cache.clear()
     return {"cleared": count, "message": f"Removed {count} cached result(s)"}
@@ -63,27 +63,35 @@ async def search(q: str = Query(...), loc: str = Query(...)):
     lat, lon, label = location["lat"], location["lon"], location["label"]
 
     start = time.time()
-    blinkit_result, instamart_result = await asyncio.gather(
+    blinkit_result, instamart_result, zepto_result = await asyncio.gather(
         _bounded_scrape(scrape_blinkit, query, lat, lon, label),
         _bounded_scrape(scrape_instamart, query, lat, lon, label),
+        _bounded_scrape(scrape_zepto, query, lat, lon, label),
     )
     elapsed = round(time.time() - start, 2)
 
-    # ── Instamart: use fixture fallback if live returns nothing ──────────────
-    instamart_items = instamart_result["items"]
-    instamart_is_sample = False
-    if not instamart_items and not instamart_result["error"]:
-        instamart_items = get_mock_items(query)
-        instamart_is_sample = bool(instamart_items)
-
-    # ── Blinkit: use fixture fallback if live returns nothing ────────────────
+    # ── Blinkit: use fixture fallback if live returns nothing ────────────
     blinkit_items = blinkit_result["items"]
     blinkit_is_sample = False
     if not blinkit_items and not blinkit_result["error"]:
         blinkit_items = get_mock_blinkit_items(query)
         blinkit_is_sample = bool(blinkit_items)
 
-    match_output = match_listings(blinkit_items, instamart_items)
+    # ── Instamart: use fixture fallback if live returns nothing ──────────
+    instamart_items = instamart_result["items"]
+    instamart_is_sample = False
+    if not instamart_items and not instamart_result["error"]:
+        instamart_items = get_mock_items(query)
+        instamart_is_sample = bool(instamart_items)
+
+    # ── Zepto: use fixture fallback if live returns nothing ──────────────
+    zepto_items = zepto_result["items"]
+    zepto_is_sample = False
+    if not zepto_items and not zepto_result["error"]:
+        zepto_items = get_mock_zepto_items(query)
+        zepto_is_sample = bool(zepto_items)
+
+    match_output = match_three_way(blinkit_items, instamart_items, zepto_items)
 
     result = {
         "query": query,
@@ -101,9 +109,16 @@ async def search(q: str = Query(...), loc: str = Query(...)):
             "is_sample": instamart_is_sample,
             "elapsed_s": instamart_result.get("elapsed"),
         },
+        "zepto": {
+            "count": len(zepto_items),
+            "error": zepto_result["error"],
+            "is_sample": zepto_is_sample,
+            "elapsed_s": zepto_result.get("elapsed"),
+        },
         "matches": match_output["matches"],
         "blinkit_only": match_output["blinkit_only"],
         "instamart_only": match_output["instamart_only"],
+        "zepto_only": match_output["zepto_only"],
         "cached": False,
     }
 

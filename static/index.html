@@ -3,954 +3,307 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PriceRace — Blinkit vs Instamart Live Comparison</title>
-<meta name="description" content="Compare real-time grocery prices between Blinkit and Swiggy Instamart. Find the cheapest platform instantly.">
+<title>PriceRace — Blinkit vs Instamart vs Zepto</title>
+<meta name="description" content="Compare real-time grocery prices across Blinkit, Swiggy Instamart and Zepto. Find the cheapest platform instantly.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  /* ── Design Tokens ─────────────────────────────────────────────────────── */
   :root {
-    --blinkit:        #f8cb46;
-    --blinkit-dark:   #e6b800;
-    --blinkit-bg:     #fffbea;
-    --instamart:      #fc8019;
-    --instamart-dark: #e06800;
-    --instamart-bg:   #fff5eb;
-    --win-green:      #10b981;
-    --win-green-bg:   #ecfdf5;
-    --ink:            #0f172a;
-    --ink-2:          #334155;
-    --muted:          #64748b;
-    --subtle:         #94a3b8;
-    --bg:             #f1f5f9;
-    --card:           #ffffff;
-    --border:         #e2e8f0;
-    --radius-lg:      16px;
-    --radius-md:      12px;
-    --radius-sm:      8px;
-    --shadow-sm:      0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-    --shadow-md:      0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
-    --shadow-lg:      0 10px 25px rgba(0,0,0,.1), 0 4px 10px rgba(0,0,0,.06);
+    --blinkit:#f8cb46;--blinkit-dark:#e6b800;--blinkit-bg:#fffbea;
+    --instamart:#fc8019;--instamart-dark:#e06800;--instamart-bg:#fff5eb;
+    --zepto:#8b5cf6;--zepto-dark:#7c3aed;--zepto-bg:#f5f3ff;
+    --win:#10b981;--win-bg:#ecfdf5;
+    --ink:#0f172a;--ink2:#334155;--muted:#64748b;--subtle:#94a3b8;
+    --bg:#f1f5f9;--card:#ffffff;--border:#e2e8f0;
+    --r-lg:16px;--r-md:12px;--r-sm:8px;
+    --sh-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+    --sh-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
   }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.5}
 
-  /* ── Reset & Base ──────────────────────────────────────────────────────── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    min-height: 100vh;
-    line-height: 1.5;
-  }
+  /* Header */
+  header{background:rgba(255,255,255,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+  .h-inner{max-width:1200px;margin:0 auto;padding:0 1.25rem;height:60px;display:flex;align-items:center;gap:1rem}
+  .logo{display:flex;align-items:center;gap:.5rem;text-decoration:none}
+  .logo-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--blinkit),var(--instamart),var(--zepto));display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 2px 8px rgba(139,92,246,.3)}
+  .logo-txt{font-size:1.1rem;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+  .logo-txt span{background:linear-gradient(135deg,var(--instamart),var(--zepto));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .h-tag{font-size:.72rem;color:var(--muted);font-weight:500;margin-left:auto}
 
-  /* ── Header ────────────────────────────────────────────────────────────── */
-  header {
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(8px);
-    background: rgba(255,255,255,0.92);
-  }
-  .header-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 1.25rem;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    text-decoration: none;
-  }
-  .logo-icon {
-    width: 38px; height: 38px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--blinkit) 0%, var(--instamart) 100%);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-    box-shadow: 0 2px 8px rgba(248,203,70,.4);
-    flex-shrink: 0;
-  }
-  .logo-text { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
-  .logo-text span { color: var(--instamart); }
-  .header-tagline { font-size: 0.78rem; color: var(--muted); font-weight: 500; margin-left: auto; }
+  /* Hero */
+  .hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);padding:2rem 1.25rem 2.5rem;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 15% 50%,rgba(248,203,70,.12) 0%,transparent 45%),radial-gradient(circle at 50% 50%,rgba(252,128,25,.1) 0%,transparent 45%),radial-gradient(circle at 85% 50%,rgba(139,92,246,.12) 0%,transparent 45%);pointer-events:none}
+  .hero-inner{max-width:1200px;margin:0 auto;position:relative}
+  .hero h1{text-align:center;font-size:clamp(1.4rem,3.5vw,2rem);font-weight:900;color:#fff;letter-spacing:-.03em;margin-bottom:.3rem}
+  .hl-y{color:var(--blinkit)}.hl-o{color:var(--instamart)}.hl-p{color:var(--zepto)}
+  .hero-sub{text-align:center;color:#94a3b8;font-size:.85rem;font-weight:500;margin-bottom:1.5rem}
 
-  /* ── Hero / Search Section ──────────────────────────────────────────────── */
-  .hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    padding: 2.5rem 1.25rem 3rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(circle at 20% 50%, rgba(248,203,70,.15) 0%, transparent 50%),
-      radial-gradient(circle at 80% 50%, rgba(252,128,25,.15) 0%, transparent 50%);
-    pointer-events: none;
-  }
-  .hero-inner { max-width: 1100px; margin: 0 auto; position: relative; }
-  .hero-heading {
-    text-align: center;
-    font-size: clamp(1.5rem, 4vw, 2.25rem);
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: -0.03em;
-    margin-bottom: 0.4rem;
-  }
-  .hero-heading .hl-yellow { color: var(--blinkit); }
-  .hero-heading .hl-orange { color: var(--instamart); }
-  .hero-sub {
-    text-align: center;
-    color: #94a3b8;
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-bottom: 1.75rem;
-  }
+  /* Search */
+  .search-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-lg);padding:1.1rem;backdrop-filter:blur(12px);max-width:760px;margin:0 auto}
+  .search-row{display:flex;gap:.5rem;flex-wrap:wrap}
+  .s-wrap{flex:1;min-width:180px;position:relative}
+  .s-icon{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:#64748b;pointer-events:none;font-size:.95rem}
+  #query{width:100%;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:500;padding:.7rem .85rem .7rem 2.3rem;border:1.5px solid rgba(255,255,255,.2);border-radius:var(--r-md);background:rgba(255,255,255,.1);color:#fff;outline:none;transition:border-color .2s}
+  #query::placeholder{color:#64748b}#query:focus{border-color:var(--blinkit)}
+  #location{font-family:'Inter',sans-serif;font-size:.82rem;font-weight:500;padding:.7rem .9rem;border:1.5px solid rgba(255,255,255,.2);border-radius:var(--r-md);background:rgba(255,255,255,.1);color:#fff;outline:none;cursor:pointer}
+  #location option{background:#1e293b;color:#fff}
+  #searchBtn{font-family:'Inter',sans-serif;font-size:.85rem;font-weight:700;padding:.7rem 1.3rem;border:none;border-radius:var(--r-md);background:linear-gradient(135deg,var(--blinkit),var(--instamart),var(--zepto));color:var(--ink);cursor:pointer;transition:transform .15s,box-shadow .15s;white-space:nowrap;box-shadow:0 2px 8px rgba(139,92,246,.3)}
+  #searchBtn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(139,92,246,.4)}
+  #searchBtn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-  /* ── Search Card ─────────────────────────────────────────────────────── */
-  .search-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-    backdrop-filter: blur(12px);
-    max-width: 720px;
-    margin: 0 auto;
-  }
-  .search-row {
-    display: flex;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-  }
-  .search-input-wrap {
-    flex: 1;
-    min-width: 200px;
-    position: relative;
-  }
-  .search-icon {
-    position: absolute;
-    left: 0.9rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #64748b;
-    pointer-events: none;
-    font-size: 1rem;
-  }
-  #query {
-    width: 100%;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    padding: 0.75rem 0.9rem 0.75rem 2.5rem;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    border-radius: var(--radius-md);
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    outline: none;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  #query::placeholder { color: #64748b; }
-  #query:focus {
-    border-color: var(--blinkit);
-    background: rgba(255,255,255,0.15);
-  }
-  #location {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 500;
-    padding: 0.75rem 1rem;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    border-radius: var(--radius-md);
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-  #location:focus { border-color: var(--instamart); }
-  #location option { background: #1e293b; color: #fff; }
-  #searchBtn {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: var(--radius-md);
-    background: linear-gradient(135deg, var(--blinkit) 0%, var(--instamart) 100%);
-    color: var(--ink);
-    cursor: pointer;
-    transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
-    white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(252,128,25,.3);
-  }
-  #searchBtn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(252,128,25,.4); }
-  #searchBtn:active { transform: translateY(0); }
-  #searchBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  /* Chips */
+  .chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.75rem;align-items:center}
+  .chips-label{font-size:.65rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-right:.1rem}
+  .chip{cursor:pointer;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#cbd5e1;padding:.25rem .65rem;border-radius:999px;font-size:.75rem;font-weight:500;transition:all .15s;font-family:'Inter',sans-serif}
+  .chip:hover{background:rgba(255,255,255,.18);color:#fff}.chip.active{background:var(--blinkit);color:var(--ink);border-color:var(--blinkit);font-weight:700}
 
-  /* ── Chips ──────────────────────────────────────────────────────────────── */
-  .chips-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.9rem;
-    align-items: center;
-  }
-  .chips-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #475569;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-right: 0.15rem;
-  }
-  .chip {
-    cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.08);
-    color: #cbd5e1;
-    padding: 0.28rem 0.75rem;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: all 0.15s;
-    font-family: 'Inter', sans-serif;
-  }
-  .chip:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
-  .chip.active { background: var(--blinkit); color: var(--ink); border-color: var(--blinkit); font-weight: 700; }
+  /* Main */
+  main{max-width:1200px;margin:0 auto;padding:1.25rem 1.25rem 4rem}
 
-  /* ── Main Content ──────────────────────────────────────────────────────── */
-  main {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 1.5rem 1.25rem 4rem;
-  }
+  /* Status */
+  #status-bar{display:none;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+  .p-badge{display:flex;align-items:center;gap:.4rem;padding:.4rem .7rem;border-radius:var(--r-md);font-size:.75rem;font-weight:600;border:1.5px solid transparent}
+  .p-badge.b-live{background:var(--blinkit-bg);border-color:var(--blinkit-dark);color:#78350f}
+  .p-badge.b-sample{background:#fffbea;border-color:#fbbf24;color:#92400e}
+  .p-badge.b-err{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+  .p-badge.i-live{background:var(--instamart-bg);border-color:var(--instamart-dark);color:#7c2d12}
+  .p-badge.i-sample{background:#fff5eb;border-color:#fb923c;color:#9a3412}
+  .p-badge.i-err{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+  .p-badge.z-live{background:var(--zepto-bg);border-color:var(--zepto-dark);color:#4c1d95}
+  .p-badge.z-sample{background:#f5f3ff;border-color:#a78bfa;color:#5b21b6}
+  .p-badge.z-err{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+  .p-badge.time-badge{background:var(--card);border-color:var(--border);color:var(--muted);margin-left:auto}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}.dot.live{background:var(--win);box-shadow:0 0 0 2px rgba(16,185,129,.25)}.dot.sample{background:#f59e0b}.dot.err{background:#ef4444}
 
-  /* ── Platform Status Bar ───────────────────────────────────────────────── */
-  #status-bar {
-    display: none;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.25rem;
-    align-items: center;
-  }
-  .platform-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.45rem 0.85rem;
-    border-radius: var(--radius-md);
-    font-size: 0.8rem;
-    font-weight: 600;
-    border: 1.5px solid transparent;
-    transition: all 0.2s;
-  }
-  .platform-badge.blinkit-live  { background: var(--blinkit-bg);   border-color: var(--blinkit-dark);  color: #78350f; }
-  .platform-badge.blinkit-sample{ background: #fffbea;             border-color: #fbbf24;               color: #92400e; }
-  .platform-badge.blinkit-err   { background: #fef2f2;             border-color: #fca5a5;               color: #991b1b; }
-  .platform-badge.instamart-live { background: var(--instamart-bg); border-color: var(--instamart-dark); color: #7c2d12; }
-  .platform-badge.instamart-sample{background: #fff5eb;            border-color: #fb923c;               color: #9a3412; }
-  .platform-badge.instamart-err { background: #fef2f2;             border-color: #fca5a5;               color: #991b1b; }
-  .platform-badge.time-badge    { background: var(--card);         border-color: var(--border);         color: var(--muted); margin-left: auto; }
-  .badge-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .badge-dot.live   { background: var(--win-green); box-shadow: 0 0 0 2px rgba(16,185,129,.25); }
-  .badge-dot.sample { background: #f59e0b; }
-  .badge-dot.err    { background: #ef4444; }
-  .badge-logo { font-size: 0.85rem; }
+  /* Loading */
+  #loading{display:none}
+  .skel-wrap{display:flex;flex-direction:column;gap:.65rem}
+  .skel-card{background:var(--card);border-radius:var(--r-lg);padding:1rem;border:1px solid var(--border);box-shadow:var(--sh-sm);display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.8rem;align-items:center}
+  .skel{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .skel-col{display:flex;flex-direction:column;gap:.35rem}.skel-line{height:11px}.skel-short{width:55%}.skel-long{width:85%}.skel-price{height:18px;width:60px}.skel-badge{height:26px;width:85px;border-radius:999px}
+  .load-txt{font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:.2rem;display:flex;align-items:center;gap:.4rem}
+  .spin{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid var(--zepto);border-top-color:transparent;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
 
-  /* ── Loading State ─────────────────────────────────────────────────────── */
-  #loading {
-    display: none;
-  }
-  .skeleton-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .skeleton-card {
-    background: var(--card);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    display: grid;
-    grid-template-columns: 56px 1fr 1fr auto;
-    gap: 1rem;
-    align-items: center;
-  }
-  .skel {
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-    border-radius: 6px;
-  }
-  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-  .skel-img    { width: 56px; height: 56px; border-radius: var(--radius-sm); flex-shrink: 0; }
-  .skel-col    { display: flex; flex-direction: column; gap: 0.4rem; }
-  .skel-line   { height: 12px; }
-  .skel-short  { width: 55%; }
-  .skel-long   { width: 85%; }
-  .skel-price  { height: 20px; width: 64px; }
-  .skel-badge  { height: 28px; width: 90px; border-radius: 999px; }
+  /* Summary */
+  #summary-bar{display:none;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:var(--r-lg);padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:var(--sh-md)}
+  .sum-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;width:100%}
+  .sum-item{display:flex;flex-direction:column;align-items:center;padding:0 .8rem;border-right:1px solid rgba(255,255,255,.08)}
+  .sum-item:last-child{border-right:none}
+  .sum-val{font-size:1.25rem;font-weight:900;color:#fff;letter-spacing:-.02em}
+  .sum-val.green{color:#34d399}.sum-val.yellow{color:var(--blinkit)}.sum-val.orange{color:var(--instamart)}.sum-val.purple{color:var(--zepto)}
+  .sum-label{font-size:.62rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-top:.1rem;text-align:center}
 
-  /* ── Section Heading ──────────────────────────────────────────────────── */
-  .section-heading {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    margin-top: 0.25rem;
-  }
-  .section-heading h2 {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--ink-2);
-  }
-  .section-heading .count-pill {
-    background: var(--ink);
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 0.1rem 0.5rem;
-    border-radius: 999px;
-  }
+  /* Section heading */
+  .sec-head{display:flex;align-items:center;gap:.45rem;margin-bottom:.65rem;margin-top:.2rem}
+  .sec-head h2{font-size:.85rem;font-weight:700;color:var(--ink2)}
+  .cnt-pill{background:var(--ink);color:#fff;font-size:.65rem;font-weight:700;padding:.08rem .45rem;border-radius:999px}
 
-  /* ── Match Card ─────────────────────────────────────────────────────────── */
-  .matches-grid { display: flex; flex-direction: column; gap: 0.65rem; }
+  /* Match Card — 3 columns */
+  .matches-grid{display:flex;flex-direction:column;gap:.6rem}
+  .match-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:.9rem 1rem;display:grid;grid-template-columns:1fr 1fr 1fr 110px;gap:.75rem;align-items:center;box-shadow:var(--sh-sm);transition:transform .15s,box-shadow .15s;animation:cardIn .3s ease both}
+  @keyframes cardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .match-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md)}
+  .match-card.w-blinkit{border-left:3px solid var(--blinkit-dark)}
+  .match-card.w-instamart{border-left:3px solid var(--instamart-dark)}
+  .match-card.w-zepto{border-left:3px solid var(--zepto-dark)}
+  .match-card.w-tie{border-left:3px solid #94a3b8}
 
-  .match-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1rem 1.1rem;
-    display: grid;
-    grid-template-columns: 56px 1fr 1fr 120px;
-    gap: 1rem;
-    align-items: center;
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-    animation: cardIn 0.3s ease both;
-  }
-  @keyframes cardIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .match-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: #c7d2fe;
-  }
-  .match-card.winner-blinkit  { border-left: 3px solid var(--blinkit-dark); }
-  .match-card.winner-instamart{ border-left: 3px solid var(--instamart-dark); }
-  .match-card.winner-tie      { border-left: 3px solid #94a3b8; }
+  /* Side */
+  .card-side{display:flex;flex-direction:column;gap:.15rem;min-width:0}
+  .side-plat{display:flex;align-items:center;gap:.25rem;margin-bottom:.05rem;flex-wrap:wrap}
+  .plat-label{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:.08rem .4rem;border-radius:5px}
+  .plat-label.blinkit{background:var(--blinkit);color:#78350f}
+  .plat-label.instamart{background:var(--instamart-bg);color:var(--instamart-dark);border:1px solid rgba(252,128,25,.3)}
+  .plat-label.zepto{background:var(--zepto-bg);color:var(--zepto-dark);border:1px solid rgba(139,92,246,.3)}
+  .sample-tag{font-size:.55rem;font-weight:700;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:4px;padding:.07rem .3rem}
+  .live-tag{font-size:.55rem;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:4px;padding:.07rem .3rem}
+  .prod-name{font-size:.82rem;font-weight:600;color:var(--ink);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prod-qty{font-size:.7rem;color:var(--muted);font-weight:500}
+  .price-row{display:flex;align-items:baseline;gap:.35rem;margin-top:.15rem}
+  .price{font-size:.95rem;font-weight:800;color:var(--ink)}.price.cheaper{color:var(--win)}
+  .mrp{font-size:.7rem;color:var(--subtle);text-decoration:line-through}
+  .not-found{font-size:.75rem;color:var(--subtle);font-style:italic;padding:.5rem 0}
 
-  /* Product image column */
-  .card-imgs {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    align-items: center;
-  }
-  .prod-img {
-    width: 48px; height: 48px;
-    object-fit: contain;
-    border-radius: 8px;
-    background: #f8fafc;
-    border: 1px solid var(--border);
-    padding: 3px;
-  }
-  .prod-img-placeholder {
-    width: 48px; height: 48px;
-    border-radius: 8px;
-    background: #f1f5f9;
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem;
-  }
+  /* Verdict */
+  .card-verdict{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem}
+  .winner-badge{font-size:.68rem;font-weight:700;padding:.25rem .6rem;border-radius:999px;white-space:nowrap}
+  .winner-badge.blinkit{background:var(--blinkit-bg);color:#78350f;border:1px solid var(--blinkit-dark)}
+  .winner-badge.instamart{background:var(--instamart-bg);color:var(--instamart-dark);border:1px solid rgba(252,128,25,.4)}
+  .winner-badge.zepto{background:var(--zepto-bg);color:var(--zepto-dark);border:1px solid rgba(139,92,246,.4)}
+  .winner-badge.tie{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+  .saving-text{font-size:.72rem;font-weight:700;color:var(--win)}
+  .conf-text{font-size:.64rem;color:var(--subtle);font-weight:500}
 
-  /* Platform side */
-  .card-side { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-  .side-plat {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    margin-bottom: 0.1rem;
-  }
-  .plat-label {
-    font-size: 0.66rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 0.1rem 0.45rem;
-    border-radius: 5px;
-  }
-  .plat-label.blinkit  { background: var(--blinkit); color: #78350f; }
-  .plat-label.instamart{ background: var(--instamart-bg); color: var(--instamart-dark); border: 1px solid rgba(252,128,25,.3); }
-  .sample-tag {
-    font-size: 0.6rem;
-    font-weight: 700;
-    background: #fef9c3;
-    color: #854d0e;
-    border: 1px solid #fde047;
-    border-radius: 4px;
-    padding: 0.1rem 0.35rem;
-    letter-spacing: 0.02em;
-  }
-  .live-tag {
-    font-size: 0.6rem;
-    font-weight: 700;
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #86efac;
-    border-radius: 4px;
-    padding: 0.1rem 0.35rem;
-    letter-spacing: 0.02em;
-  }
-  .prod-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--ink);
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .prod-qty { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
-  .price-row {
-    display: flex;
-    align-items: baseline;
-    gap: 0.4rem;
-    margin-top: 0.2rem;
-  }
-  .price {
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: var(--ink);
-  }
-  .price.cheaper { color: var(--win-green); }
-  .mrp {
-    font-size: 0.75rem;
-    color: var(--subtle);
-    text-decoration: line-through;
-  }
-  .unit-price {
-    font-size: 0.7rem;
-    color: var(--subtle);
-    font-weight: 500;
-  }
-  .out-of-stock { font-size: 0.75rem; color: #ef4444; font-weight: 600; }
+  /* Unmatched */
+  .unmatched-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;margin-top:1.25rem}
+  .unmatched-col{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:.9rem 1rem;box-shadow:var(--sh-sm)}
+  .unmatched-col-head{display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem;font-size:.78rem;font-weight:700;color:var(--ink2)}
+  .unmatched-list{list-style:none}
+  .unmatched-item{display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border);animation:cardIn .25s ease both}
+  .unmatched-item:last-child{border-bottom:none}
+  .unmatched-info{flex:1;min-width:0}
+  .unmatched-name{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+  .unmatched-meta{font-size:.68rem;color:var(--muted)}
+  .unmatched-price{font-size:.82rem;font-weight:700;color:var(--ink);white-space:nowrap}
 
-  /* Verdict column */
-  .card-verdict { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; }
-  .winner-badge {
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.3rem 0.7rem;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-  .winner-badge.blinkit  { background: var(--blinkit-bg); color: #78350f; border: 1px solid var(--blinkit-dark); }
-  .winner-badge.instamart{ background: var(--instamart-bg); color: var(--instamart-dark); border: 1px solid rgba(252,128,25,.4); }
-  .winner-badge.tie      { background: #f1f5f9; color: var(--muted); border: 1px solid var(--border); }
-  .saving-text  { font-size: 0.75rem; font-weight: 700; color: var(--win-green); }
-  .conf-text    { font-size: 0.68rem; color: var(--subtle); font-weight: 500; }
-  .prod-link {
-    font-size: 0.68rem;
-    color: #6366f1;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .prod-link:hover { text-decoration: underline; }
+  /* Empty */
+  .empty-state{text-align:center;padding:2.5rem 1.5rem;color:var(--muted)}
+  .empty-icon{font-size:2.2rem;margin-bottom:.6rem}.empty-state h3{font-size:.95rem;font-weight:700;color:var(--ink2);margin-bottom:.3rem}.empty-state p{font-size:.82rem;max-width:380px;margin:0 auto}
 
-  /* ── Unmatched Section ─────────────────────────────────────────────────── */
-  .unmatched-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-  .unmatched-col {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1rem 1.1rem;
-    box-shadow: var(--shadow-sm);
-  }
-  .unmatched-col-head {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.6rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--ink-2);
-  }
-  .unmatched-list { list-style: none; }
-  .unmatched-item {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.45rem 0;
-    border-bottom: 1px solid var(--border);
-    animation: cardIn 0.25s ease both;
-  }
-  .unmatched-item:last-child { border-bottom: none; }
-  .unmatched-img {
-    width: 36px; height: 36px;
-    object-fit: contain;
-    border-radius: 6px;
-    background: #f8fafc;
-    border: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .unmatched-info { flex: 1; min-width: 0; }
-  .unmatched-name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--ink);
-  }
-  .unmatched-meta { font-size: 0.72rem; color: var(--muted); }
-  .unmatched-price { font-size: 0.875rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
-
-  /* ── Empty / Error States ─────────────────────────────────────────────── */
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1.5rem;
-    color: var(--muted);
-  }
-  .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
-  .empty-state h3 { font-size: 1rem; font-weight: 700; color: var(--ink-2); margin-bottom: 0.35rem; }
-  .empty-state p  { font-size: 0.85rem; max-width: 380px; margin: 0 auto; }
-
-  /* ── Savings Summary Bar ───────────────────────────────────────────────── */
-  #summary-bar {
-    display: none;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-radius: var(--radius-lg);
-    padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
-    gap: 0;
-    align-items: stretch;
-    box-shadow: var(--shadow-md);
-  }
-  .sum-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    width: 100%;
-  }
-  .sum-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0 1rem;
-    border-right: 1px solid rgba(255,255,255,.08);
-  }
-  .sum-item:first-child { padding-left: 0; }
-  .sum-item:last-child  { border-right: none; }
-  .sum-val  { font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: -0.02em; }
-  .sum-val.green  { color: #34d399; }
-  .sum-val.yellow { color: var(--blinkit); }
-  .sum-val.orange { color: var(--instamart); }
-  .sum-label { font-size: 0.68rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.15rem; }
-
-  /* ── Responsive ────────────────────────────────────────────────────────── */
-  @media (max-width: 720px) {
-    .match-card { grid-template-columns: 48px 1fr auto; }
-    .card-imgs  { display: none; }
-    .match-card { grid-template-columns: 1fr auto; }
-    .card-side  { min-width: 0; }
-    .unmatched-grid { grid-template-columns: 1fr; }
-    .sum-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-    .sum-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,.08); padding: 0.5rem 0; }
-    .sum-item:nth-child(2n) { border-right: none; }
-    .sum-item:last-child    { border-bottom: none; }
-  }
-  @media (max-width: 500px) {
-    .hero-heading { font-size: 1.35rem; }
-    .match-card { padding: 0.85rem; }
-  }
+  /* Responsive */
+  @media(max-width:800px){.match-card{grid-template-columns:1fr 1fr auto}.card-side.zepto-side{display:none}.unmatched-grid{grid-template-columns:1fr}.sum-grid{grid-template-columns:repeat(3,1fr);gap:.4rem}.sum-item{border-right:none;padding:.4rem 0}}
+  @media(max-width:500px){.hero h1{font-size:1.3rem}.match-card{grid-template-columns:1fr auto;padding:.75rem}.card-side.instamart-side{display:none}}
 </style>
 </head>
 <body>
 
-<!-- ── Header ─────────────────────────────────────────────────────────────── -->
 <header>
-  <div class="header-inner">
-    <a href="/" class="logo">
-      <div class="logo-icon">⚡</div>
-      <div class="logo-text">Price<span>Race</span></div>
-    </a>
-    <div class="header-tagline">Live price comparison · Blinkit &amp; Instamart</div>
+  <div class="h-inner">
+    <a href="/" class="logo"><div class="logo-icon">⚡</div><div class="logo-txt">Price<span>Race</span></div></a>
+    <div class="h-tag">Live comparison · Blinkit · Instamart · Zepto</div>
   </div>
 </header>
 
-<!-- ── Hero / Search ──────────────────────────────────────────────────────── -->
 <div class="hero">
   <div class="hero-inner">
-    <h1 class="hero-heading">
-      <span class="hl-yellow">Blinkit</span> vs <span class="hl-orange">Instamart</span><br>
-      Real-Time Price Battle
-    </h1>
-    <p class="hero-sub">Search any grocery — see live prices from both platforms, side by side.</p>
-
+    <h1><span class="hl-y">Blinkit</span> vs <span class="hl-o">Instamart</span> vs <span class="hl-p">Zepto</span></h1>
+    <p class="hero-sub">Search any grocery — see live prices from all 3 platforms, side by side.</p>
     <div class="search-card">
       <div class="search-row">
-        <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="query" placeholder="Search e.g. Amul Butter, Maggi, Milk…" value="Amul Butter" autocomplete="off">
-        </div>
+        <div class="s-wrap"><span class="s-icon">🔍</span><input type="text" id="query" placeholder="Search e.g. Amul Butter, Maggi, Milk…" value="Amul Butter" autocomplete="off"></div>
         <select id="location"></select>
         <button id="searchBtn">Compare →</button>
       </div>
-      <div class="chips-wrap">
-        <span class="chips-label">Quick search</span>
-        <div id="chipsContainer"></div>
-      </div>
+      <div class="chips"><span class="chips-label">Quick</span><div id="chipsC"></div></div>
     </div>
   </div>
 </div>
 
-<!-- ── Main ───────────────────────────────────────────────────────────────── -->
 <main>
-  <!-- Status Bar -->
   <div id="status-bar"></div>
-
-  <!-- Loading Skeletons -->
   <div id="loading">
-    <div class="skeleton-wrap">
-      <div style="font-size:0.8rem;font-weight:600;color:var(--muted);margin-bottom:0.25rem;display:flex;align-items:center;gap:0.4rem;">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid var(--instamart);border-top-color:transparent;animation:spin .7s linear infinite;"></span>
-        Searching Blinkit &amp; Instamart live… this takes 15–30s on fresh queries
-      </div>
-      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-      <div class="skeleton-card">
-        <div class="skel skel-img"></div>
-        <div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px;"></div></div>
-        <div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px;"></div></div>
-        <div class="skel skel-badge"></div>
-      </div>
-      <div class="skeleton-card">
-        <div class="skel skel-img"></div>
-        <div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px;"></div></div>
-        <div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px;"></div></div>
-        <div class="skel skel-badge"></div>
-      </div>
-      <div class="skeleton-card">
-        <div class="skel skel-img"></div>
-        <div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px;"></div></div>
-        <div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px;"></div></div>
-        <div class="skel skel-badge"></div>
-      </div>
+    <div class="skel-wrap">
+      <div class="load-txt"><span class="spin"></span> Searching Blinkit, Instamart &amp; Zepto… ~15–30s</div>
+      <div class="skel-card"><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel skel-badge"></div></div>
+      <div class="skel-card"><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel skel-badge"></div></div>
+      <div class="skel-card"><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel-col"><div class="skel skel-line skel-short"></div><div class="skel skel-line skel-long"></div><div class="skel skel-price" style="margin-top:4px"></div></div><div class="skel skel-badge"></div></div>
     </div>
   </div>
-
-  <!-- Summary Bar -->
-  <div id="summary-bar">
-    <div class="sum-grid">
-      <div class="sum-item"><div class="sum-val" id="sum-matched">—</div><div class="sum-label">Matched Pairs</div></div>
-      <div class="sum-item"><div class="sum-val yellow" id="sum-blinkit-wins">—</div><div class="sum-label">Blinkit Cheaper</div></div>
-      <div class="sum-item"><div class="sum-val orange" id="sum-instamart-wins">—</div><div class="sum-label">Instamart Cheaper</div></div>
-      <div class="sum-item"><div class="sum-val green" id="sum-max-saving">—</div><div class="sum-label">Max Savings</div></div>
-    </div>
-  </div>
-
-  <!-- Results -->
+  <div id="summary-bar"><div class="sum-grid">
+    <div class="sum-item"><div class="sum-val" id="sm-match">—</div><div class="sum-label">Matched</div></div>
+    <div class="sum-item"><div class="sum-val yellow" id="sm-bwin">—</div><div class="sum-label">Blinkit Wins</div></div>
+    <div class="sum-item"><div class="sum-val orange" id="sm-iwin">—</div><div class="sum-label">Instamart Wins</div></div>
+    <div class="sum-item"><div class="sum-val purple" id="sm-zwin">—</div><div class="sum-label">Zepto Wins</div></div>
+    <div class="sum-item"><div class="sum-val green" id="sm-save">—</div><div class="sum-label">Max Saving</div></div>
+  </div></div>
   <div id="results"></div>
 </main>
 
 <script>
-const POPULAR = [
-  "Amul Butter","Maggi","Milk","Bread","Eggs","Paneer",
-  "Atta","Rice","Oil","Chips","Chocolate","Tea","Coffee",
-  "Coke","Biscuit","Onion","Potato","Dettol","Salt","Surf Excel"
-];
+const POP=["Amul Butter","Maggi","Milk","Bread","Eggs","Paneer","Atta","Rice","Oil","Chips","Chocolate","Tea","Coffee","Coke","Biscuit","Onion","Potato","Dettol","Salt","Surf Excel"];
+const $=id=>document.getElementById(id);
+const sBar=$('status-bar'),loadEl=$('loading'),sumBar=$('summary-bar'),resEl=$('results'),qEl=$('query'),locEl=$('location'),btn=$('searchBtn'),chC=$('chipsC');
+const fmt=p=>p==null?'—':`₹${Number(p).toFixed(0)}`;
+const esc=s=>{const d=document.createElement('div');d.textContent=s??'';return d.innerHTML};
 
-const $ = id => document.getElementById(id);
-const statusBar   = $('status-bar');
-const loadingEl   = $('loading');
-const summaryBar  = $('summary-bar');
-const resultsEl   = $('results');
-const queryEl     = $('query');
-const locationEl  = $('location');
-const searchBtn   = $('searchBtn');
-const chipsEl     = $('chipsContainer');
+chC.innerHTML=POP.map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');
+chC.querySelectorAll('.chip').forEach(c=>{c.addEventListener('click',()=>{chC.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');qEl.value=c.dataset.t;doSearch()})});
 
-/* ── Chips ─────────────────────────────────────────────────────────────── */
-chipsEl.innerHTML = POPULAR.map(t =>
-  `<button class="chip" data-term="${t}">${t}</button>`
-).join('');
-chipsEl.querySelectorAll('.chip').forEach(c => {
-  c.addEventListener('click', () => {
-    chipsEl.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
-    c.classList.add('active');
-    queryEl.value = c.dataset.term;
-    doSearch();
-  });
-});
+async function loadLocs(){try{const l=await fetch('/api/locations').then(r=>r.json());locEl.innerHTML=l.map(x=>`<option value="${x.key}">📍 ${x.label}</option>`).join('')}catch{}}
 
-/* ── Locations ─────────────────────────────────────────────────────────── */
-async function loadLocations() {
-  try {
-    const locs = await fetch('/api/locations').then(r => r.json());
-    locationEl.innerHTML = locs.map(l =>
-      `<option value="${l.key}">📍 ${l.label}</option>`
-    ).join('');
-  } catch {}
-}
-
-/* ── Format helpers ─────────────────────────────────────────────────────── */
-const fmt  = p => p == null ? '—' : `₹${Number(p).toFixed(2)}`;
-const esc  = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
-
-function unitPrice(item) {
-  const price = item.price, qty = item.quantity || '';
-  const mmp = qty.match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)\s*(g|kg|ml|l)\b/i);
-  const msp = qty.match(/(\d+(?:\.\d+)?)\s*(g|gm|kg|ml|l)\b/i);
-  let grams = null, label = null;
-  if (mmp) {
-    const total = parseFloat(mmp[1]) * parseFloat(mmp[2]);
-    const u = mmp[3].toLowerCase();
-    grams = (u === 'kg' || u === 'l') ? total * 1000 : total;
-    label = (u === 'ml' || u === 'l') ? '100ml' : '100g';
-  } else if (msp) {
-    const v = parseFloat(msp[1]);
-    const u = msp[2].toLowerCase();
-    grams = (u === 'kg' || u === 'l') ? v * 1000 : v;
-    label = (u === 'ml' || u === 'l') ? '100ml' : '100g';
-  }
-  if (!grams || grams === 0) return null;
-  return `${fmt(price / grams * 100)}/${label}`;
-}
-
-/* ── Render platform side ──────────────────────────────────────────────── */
-function renderSide(platform, item, isCheaper) {
-  if (!item) {
-    return `<div class="card-side">
-      <div class="side-plat"><span class="plat-label ${platform}">${platform}</span></div>
-      <div class="prod-name" style="color:var(--subtle)">Not found</div>
-    </div>`;
-  }
-  const isSample  = item.is_sample;
-  const priceClass = isCheaper ? 'price cheaper' : 'price';
-  const mrpHtml = (item.mrp && item.mrp > item.price)
-    ? `<span class="mrp">${fmt(item.mrp)}</span>` : '';
-  const up = unitPrice(item);
-  const upHtml = up ? `<div class="unit-price">${up}</div>` : '';
-  const stockHtml = item.in_stock === false
-    ? `<span class="out-of-stock">Out of stock</span>` : '';
-  const dataTag = isSample
-    ? `<span class="sample-tag">SAMPLE</span>`
-    : `<span class="live-tag">LIVE</span>`;
-
-  return `<div class="card-side">
-    <div class="side-plat">
-      <span class="plat-label ${platform}">${platform === 'blinkit' ? 'Blinkit' : 'Instamart'}</span>
-      ${dataTag}
-    </div>
+function renderSide(plat, item, isCheaper) {
+  const cls = plat === 'blinkit' ? 'blinkit-side' : plat === 'instamart' ? 'instamart-side' : 'zepto-side';
+  if(!item) return `<div class="card-side ${cls}"><div class="side-plat"><span class="plat-label ${plat}">${plat==='blinkit'?'Blinkit':plat==='instamart'?'Instamart':'Zepto'}</span></div><div class="not-found">Not found</div></div>`;
+  const isSample=item.is_sample;
+  const pCls=isCheaper?'price cheaper':'price';
+  const mrpH=(item.mrp&&item.mrp>item.price)?`<span class="mrp">${fmt(item.mrp)}</span>`:'';
+  const tag=isSample?`<span class="sample-tag">SAMPLE</span>`:`<span class="live-tag">LIVE</span>`;
+  return `<div class="card-side ${cls}">
+    <div class="side-plat"><span class="plat-label ${plat}">${plat==='blinkit'?'Blinkit':plat==='instamart'?'Instamart':'Zepto'}</span>${tag}</div>
     <div class="prod-name" title="${esc(item.name)}">${esc(item.name)}</div>
-    ${item.quantity ? `<div class="prod-qty">${esc(item.quantity)}</div>` : ''}
-    <div class="price-row">
-      <span class="${priceClass}">${fmt(item.price)}</span>
-      ${mrpHtml}
-    </div>
-    ${upHtml}
-    ${stockHtml}
+    ${item.quantity?`<div class="prod-qty">${esc(item.quantity)}</div>`:''}
+    <div class="price-row"><span class="${pCls}">${fmt(item.price)}</span>${mrpH}</div>
   </div>`;
 }
 
-/* ── Render image ──────────────────────────────────────────────────────── */
-function renderImg(item, emoji) {
-  if (item?.image) {
-    return `<img class="prod-img" src="${esc(item.image)}" alt="" loading="lazy"
-      onerror="this.outerHTML='<div class=\\'prod-img-placeholder\\'>${emoji}</div>'" >`;
-  }
-  return `<div class="prod-img-placeholder">${emoji}</div>`;
-}
-
-/* ── Render matched pairs ──────────────────────────────────────────────── */
 function renderMatches(matches) {
-  if (!matches.length) {
-    return `<div class="empty-state">
-      <div class="empty-icon">🔎</div>
-      <h3>No matched pairs found</h3>
-      <p>Products were found on individual platforms but couldn't be paired by size & brand. Check the "Only on…" sections below.</p>
-    </div>`;
-  }
-
-  return matches.map((m, i) => {
-    const isTie  = m.cheaper === 'tie';
-    const bWins  = m.cheaper === 'blinkit';
-    const sWins  = m.cheaper === 'instamart';
-
-    const badgeClass = isTie ? 'tie' : (bWins ? 'blinkit' : 'instamart');
-    const badgeText  = isTie ? '🤝 Equal' : (bWins ? '🟡 Blinkit wins' : '🟠 Instamart wins');
-    const savHtml    = m.saving > 0 ? `<div class="saving-text">Save ${fmt(m.saving)}</div>` : '';
-    const cardClass  = isTie ? 'winner-tie' : (bWins ? 'winner-blinkit' : 'winner-instamart');
-
-    const delay = `animation-delay:${i * 0.04}s`;
-
-    const bLink  = m.blinkit?.productUrl  ? `<a class="prod-link" href="${esc(m.blinkit.productUrl)}"  target="_blank" rel="noopener">View on Blinkit →</a>`  : '';
-    const sLink  = m.instamart?.productUrl? `<a class="prod-link" href="${esc(m.instamart.productUrl)}" target="_blank" rel="noopener">View on Instamart →</a>` : '';
-
-    return `<div class="match-card ${cardClass}" style="${delay}">
-      <div class="card-imgs">
-        ${renderImg(m.blinkit,  '🛒')}
-      </div>
-      ${renderSide('blinkit',   m.blinkit,   bWins)}
-      ${renderSide('instamart', m.instamart, sWins)}
+  if(!matches.length) return `<div class="empty-state"><div class="empty-icon">🔎</div><h3>No matched products found</h3><p>Products found on individual platforms couldn't be matched by brand & size. Check below.</p></div>`;
+  return matches.map((m,i)=>{
+    const cheapest=m.cheapest||'tie';
+    const isTie=cheapest==='tie';
+    const bWins=cheapest==='blinkit',iWins=cheapest==='instamart',zWins=cheapest==='zepto';
+    const emoji=isTie?'🤝':bWins?'🟡':iWins?'🟠':'🟣';
+    const badgeText=isTie?'Equal':bWins?'Blinkit wins':iWins?'Instamart wins':'Zepto wins';
+    const savH=m.saving>0?`<div class="saving-text">Save ${fmt(m.saving)}</div>`:'';
+    const wCls=isTie?'w-tie':bWins?'w-blinkit':iWins?'w-instamart':'w-zepto';
+    const delay=`animation-delay:${i*.04}s`;
+    return `<div class="match-card ${wCls}" style="${delay}">
+      ${renderSide('blinkit',m.blinkit,bWins)}
+      ${renderSide('instamart',m.instamart,iWins)}
+      ${renderSide('zepto',m.zepto,zWins)}
       <div class="card-verdict">
-        <span class="winner-badge ${badgeClass}">${badgeText}</span>
-        ${savHtml}
-        <div class="conf-text">${Math.round(m.confidence * 100)}% match</div>
-        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;margin-top:2px;">
-          ${bLink}${sLink}
-        </div>
+        <span class="winner-badge ${cheapest}">${emoji} ${badgeText}</span>
+        ${savH}
+        <div class="conf-text">${Math.round(m.confidence*100)}% match</div>
       </div>
     </div>`;
   }).join('');
 }
 
-/* ── Render unmatched list ─────────────────────────────────────────────── */
-function renderOnlyList(title, items, platClass, emoji) {
-  const inner = items.length === 0
-    ? `<p style="font-size:0.82rem;color:var(--subtle);">None found</p>`
-    : `<ul class="unmatched-list">${items.map(it => {
-        const imgHtml = it.image
-          ? `<img class="unmatched-img" src="${esc(it.image)}" alt="" loading="lazy" onerror="this.src=''">`
-          : `<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:#f1f5f9;border-radius:6px;border:1px solid var(--border);">${emoji}</div>`;
-        const qty = it.quantity ? ` · ${esc(it.quantity)}` : '';
-        const sampleHtml = it.is_sample ? ' <span class="sample-tag">SAMPLE</span>' : ' <span class="live-tag">LIVE</span>';
-        return `<li class="unmatched-item">
-          ${imgHtml}
-          <div class="unmatched-info">
-            <div class="unmatched-name">${esc(it.name)}${sampleHtml}</div>
-            <div class="unmatched-meta">${qty}</div>
-          </div>
-          <div class="unmatched-price">${fmt(it.price)}</div>
-        </li>`;
-      }).join('')}</ul>`;
-
-  return `<div class="unmatched-col">
-    <div class="unmatched-col-head">
-      <span class="plat-label ${platClass}" style="font-size:0.7rem;">${platClass === 'blinkit' ? 'Blinkit' : 'Instamart'}</span>
-      Only on this platform (${items.length})
-    </div>
-    ${inner}
-  </div>`;
+function renderOnlyList(title, items, platCls) {
+  const label=platCls==='blinkit'?'Blinkit':platCls==='instamart'?'Instamart':'Zepto';
+  const inner=items.length===0?`<p style="font-size:.78rem;color:var(--subtle)">None</p>`:`<ul class="unmatched-list">${items.map(it=>{
+    const qty=it.quantity?` · ${esc(it.quantity)}`:'';
+    const sTag=it.is_sample?'<span class="sample-tag">SAMPLE</span>':'<span class="live-tag">LIVE</span>';
+    return `<li class="unmatched-item"><div class="unmatched-info"><div class="unmatched-name">${esc(it.name)} ${sTag}</div><div class="unmatched-meta">${qty}</div></div><div class="unmatched-price">${fmt(it.price)}</div></li>`;
+  }).join('')}</ul>`;
+  return `<div class="unmatched-col"><div class="unmatched-col-head"><span class="plat-label ${platCls}" style="font-size:.65rem">${label}</span> Only here (${items.length})</div>${inner}</div>`;
 }
 
-/* ── Status bar ─────────────────────────────────────────────────────────── */
-function renderStatus(data) {
-  const bSample = data.blinkit.is_sample;
-  const sSample = data.instamart.is_sample;
-  const bErr    = data.blinkit.error;
-  const sErr    = data.instamart.error;
-
-  const bClass = bErr ? 'blinkit-err' : (bSample ? 'blinkit-sample' : 'blinkit-live');
-  const sClass = sErr ? 'instamart-err' : (sSample ? 'instamart-sample' : 'instamart-live');
-  const bDot   = bErr ? 'err' : (bSample ? 'sample' : 'live');
-  const sDot   = sErr ? 'err' : (sSample ? 'sample' : 'live');
-
-  const bText  = bErr ? 'Error' : (bSample ? `${data.blinkit.count} items · Fixture` : `${data.blinkit.count} items · Live`);
-  const sText  = sErr ? 'Error' : (sSample ? `${data.instamart.count} items · Fixture` : `${data.instamart.count} items · Live`);
-
-  const timeText = `⏱ ${data.elapsed_s}s${data.cached ? ' · cached' : ''}`;
-
-  statusBar.style.display = 'flex';
-  statusBar.innerHTML = `
-    <div class="platform-badge ${bClass}">
-      <div class="badge-dot ${bDot}"></div>
-      <span>🟡</span> Blinkit · ${bText}
-    </div>
-    <div class="platform-badge ${sClass}">
-      <div class="badge-dot ${sDot}"></div>
-      <span>🟠</span> Instamart · ${sText}
-    </div>
-    <div class="platform-badge time-badge">${timeText}</div>`;
+function renderStatus(d) {
+  const mk=(p,key,icon,lbl)=>{
+    const s=d[key].is_sample,e=d[key].error;
+    const cls=e?`${p}-err`:s?`${p}-sample`:`${p}-live`;
+    const dot=e?'err':s?'sample':'live';
+    const txt=e?'Error':s?`${d[key].count} · Fixture`:`${d[key].count} · Live`;
+    return `<div class="p-badge ${cls}"><div class="dot ${dot}"></div><span>${icon}</span> ${lbl} · ${txt}</div>`;
+  };
+  sBar.style.display='flex';
+  sBar.innerHTML=mk('b','blinkit','🟡','Blinkit')+mk('i','instamart','🟠','Instamart')+mk('z','zepto','🟣','Zepto')+`<div class="p-badge time-badge">⏱ ${d.elapsed_s}s${d.cached?' · cached':''}</div>`;
 }
 
-/* ── Summary bar ─────────────────────────────────────────────────────────── */
 function renderSummary(matches) {
-  const bWins = matches.filter(m => m.cheaper === 'blinkit').length;
-  const sWins = matches.filter(m => m.cheaper === 'instamart').length;
-  const maxSav = Math.max(0, ...matches.map(m => m.saving || 0));
-
-  $('sum-matched').textContent        = matches.length;
-  $('sum-blinkit-wins').textContent   = bWins;
-  $('sum-instamart-wins').textContent = sWins;
-  $('sum-max-saving').textContent     = maxSav > 0 ? fmt(maxSav) : '₹0';
-
-  summaryBar.style.display = 'flex';
+  const bw=matches.filter(m=>m.cheapest==='blinkit').length;
+  const iw=matches.filter(m=>m.cheapest==='instamart').length;
+  const zw=matches.filter(m=>m.cheapest==='zepto').length;
+  const ms=Math.max(0,...matches.map(m=>m.saving||0));
+  $('sm-match').textContent=matches.length;$('sm-bwin').textContent=bw;$('sm-iwin').textContent=iw;$('sm-zwin').textContent=zw;$('sm-save').textContent=ms>0?fmt(ms):'₹0';
+  sumBar.style.display='flex';
 }
 
-/* ── Main search ─────────────────────────────────────────────────────────── */
 async function doSearch() {
-  const q   = queryEl.value.trim();
-  const loc = locationEl.value;
-  if (!q) return;
-
-  searchBtn.disabled = true;
-  loadingEl.style.display  = 'block';
-  summaryBar.style.display = 'none';
-  statusBar.style.display  = 'none';
-  resultsEl.innerHTML = '';
-
+  const q=qEl.value.trim(),loc=locEl.value;if(!q)return;
+  btn.disabled=true;loadEl.style.display='block';sumBar.style.display='none';sBar.style.display='none';resEl.innerHTML='';
   try {
-    const data = await fetch(
-      `/api/search?q=${encodeURIComponent(q)}&loc=${encodeURIComponent(loc)}`
-    ).then(r => r.json());
-
-    renderStatus(data);
-    if (data.matches.length > 0) renderSummary(data.matches);
-
-    resultsEl.innerHTML = `
-      <div class="section-heading">
-        <h2>Matched Products</h2>
-        <span class="count-pill">${data.matches.length}</span>
-      </div>
-      <div class="matches-grid">${renderMatches(data.matches)}</div>
-      <div class="unmatched-grid">
-        ${renderOnlyList('Only on Blinkit',   data.blinkit_only,   'blinkit',   '🛒')}
-        ${renderOnlyList('Only on Instamart', data.instamart_only, 'instamart', '🧡')}
-      </div>`;
-
-  } catch (e) {
-    statusBar.style.display = 'flex';
-    statusBar.innerHTML = `<div class="platform-badge blinkit-err">⚠ Search failed: ${esc(String(e))}</div>`;
-  } finally {
-    loadingEl.style.display = 'none';
-    searchBtn.disabled = false;
-  }
+    const d=await fetch(`/api/search?q=${encodeURIComponent(q)}&loc=${encodeURIComponent(loc)}`).then(r=>r.json());
+    renderStatus(d);
+    if(d.matches.length>0)renderSummary(d.matches);
+    resEl.innerHTML=`<div class="sec-head"><h2>Matched Products</h2><span class="cnt-pill">${d.matches.length}</span></div>
+      <div class="matches-grid">${renderMatches(d.matches)}</div>
+      <div class="unmatched-grid">${renderOnlyList('Blinkit Only',d.blinkit_only,'blinkit')}${renderOnlyList('Instamart Only',d.instamart_only,'instamart')}${renderOnlyList('Zepto Only',d.zepto_only||[],'zepto')}</div>`;
+  } catch(e) {
+    sBar.style.display='flex';sBar.innerHTML=`<div class="p-badge b-err">⚠ ${esc(String(e))}</div>`;
+  } finally {loadEl.style.display='none';btn.disabled=false}
 }
 
-/* ── Events ──────────────────────────────────────────────────────────────── */
-searchBtn.addEventListener('click', () => {
-  chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  doSearch();
-});
-queryEl.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    doSearch();
-  }
-});
-
-/* ── Init ─────────────────────────────────────────────────────────────────── */
-loadLocations().then(() => doSearch());
+btn.addEventListener('click',()=>{chC.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));doSearch()});
+qEl.addEventListener('keydown',e=>{if(e.key==='Enter'){chC.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));doSearch()}});
+loadLocs().then(()=>doSearch());
 </script>
 </body>
 </html>

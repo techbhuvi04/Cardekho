@@ -438,8 +438,96 @@ async def scrape_instamart(query, lat, lon, address="Selected Location"):
         return {"items": [], "error": str(e), "elapsed": round(time.time() - start, 2)}
 
 
+async def scrape_zepto(query, lat, lon, address="Selected Location"):
+    """Scrape Zepto search results.
+
+    Uses the same Playwright API-intercept + DOM-fallback strategy as Blinkit.
+    Search URL: https://www.zeptonow.com/search?query=<term>
+    """
+    start = time.time()
+    try:
+        browser = await get_browser()
+        context = await browser.new_context(
+            locale="en-IN",
+            user_agent=USER_AGENT,
+            geolocation={"latitude": lat, "longitude": lon},
+            permissions=["geolocation"],
+            extra_http_headers=BROWSER_HEADERS,
+            viewport={"width": 1280, "height": 800},
+        )
+        await context.add_init_script(
+            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        )
+
+        # Zepto location cookies
+        location_payload = json.dumps({"lat": lat, "lng": lon, "address": address})
+        await context.add_cookies([
+            {"name": "userLocation", "value": urllib.parse.quote(location_payload),
+             "domain": ".zeptonow.com", "path": "/"},
+            {"name": "location_set", "value": "true",
+             "domain": ".zeptonow.com", "path": "/"},
+        ])
+
+        # localStorage pre-seeding
+        loc_obj = json.dumps({"lat": lat, "lng": lon, "address": address})
+        await context.add_init_script(
+            f"""try {{ localStorage.setItem('userLocation', {json.dumps(loc_obj)}); }} catch(e) {{}}"""
+        )
+
+        page = await context.new_page()
+
+        captured = []
+        seen = set()
+
+        async def on_response(response):
+            url = response.url
+            is_zepto = "zeptonow.com" in url
+            is_relevant = (
+                "search" in url
+                or "/api/" in url
+                or "/product" in url
+            )
+            if not (is_zepto and is_relevant):
+                return
+            try:
+                data = await response.json()
+            except Exception:
+                return
+            walk_json_for_products(data, captured, seen)
+
+        page.on("response", on_response)
+
+        url = f"https://www.zeptonow.com/search?query={urllib.parse.quote(query)}"
+        await page.goto(url, timeout=SITE_TIMEOUT_S * 1000, wait_until="domcontentloaded")
+
+        # Try to dismiss location wall if any
+        try:
+            detect_btn = page.get_by_text(
+                re.compile(r"detect|use current location|allow", re.I)
+            ).first
+            if await detect_btn.count() > 0:
+                await detect_btn.click(timeout=4000)
+                await page.wait_for_timeout(2000)
+        except Exception:
+            pass
+
+        await page.wait_for_timeout(RESULTS_WAIT_S * 1000)
+
+        if not captured:
+            page_text = await page.inner_text("body")
+            if "₹" in page_text:
+                captured = await _dom_fallback(page)
+
+        await context.close()
+        captured = _filter_by_query(captured, query)
+        return {"items": captured, "error": None, "elapsed": round(time.time() - start, 2)}
+    except Exception as e:
+        return {"items": [], "error": str(e), "elapsed": round(time.time() - start, 2)}
+
+
 async def shutdown_browser():
     global _browser
     if _browser is not None:
         await _browser.close()
         _browser = None
+
