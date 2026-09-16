@@ -10,11 +10,13 @@
 ### Hero — Search UI
 ![PriceRace hero search interface](docs/screenshot_hero.png)
 
-### Amul Butter — Live 3-way comparison
-![Amul Butter comparison across Blinkit, Instamart and Zepto](docs/screenshot_butter.png)
-
 ### Maggi — Live Blinkit results vs fixture fallback
-![Maggi noodles price comparison](docs/screenshot_maggi.png)
+![Maggi noodles price comparison](UI_demo.png)
+
+### Amul Butter — Live 3-way comparison
+![Amul Butter comparison across Blinkit, Instamart and Zepto](UI_demo1.png)
+
+
 
 ---
 
